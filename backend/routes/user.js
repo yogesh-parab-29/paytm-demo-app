@@ -1,10 +1,13 @@
 const express = require("express");
-const { signupUserSchema, signInUserSchema } = require("../types");
+const {
+  signupUserSchema,
+  signInUserSchema,
+  updateUserSchema,
+} = require("../types");
 import { JWT_SECRET } from "../config";
 const jwt = require("jsonwebtoken");
 import { User } from "../db/database";
-const {authMiddleware} = require('../middlewares/middleware')
-
+const authMiddleware = require("../middlewares/middleware");
 
 const router = express.Router();
 
@@ -80,8 +83,23 @@ router.post("/signin", async (req, res) => {
   });
 });
 
-router.put("/",authMiddleware, async (req, res) => {
+router.put("/", authMiddleware, async (req, res) => {
+  const validateInput = updateUserSchema.safeParse(req.body);
+  if (!validateInput.success) {
+    return res.status(400).json({
+      msg: "error while updating information",
+    });
+  }
 
+  await User.updateOne(
+    {
+      _id: req.userId,
+    },
+    req.body
+  );
+  res.json({
+    message:"Update successfully"
+  })
 });
 
 module.exports = router;
