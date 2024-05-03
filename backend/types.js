@@ -17,4 +17,5 @@ const updateUserSchema = zod.object({
   lastname: zod.string(),
   password: zod.string(),
 })
+
 module.exports = { signupUserSchema, signInUserSchema , updateUserSchema};

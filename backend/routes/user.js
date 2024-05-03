@@ -6,10 +6,54 @@ const {
 } = require("../types");
 import { JWT_SECRET } from "../config";
 const jwt = require("jsonwebtoken");
-import { User } from "../db/database";
+import { Account, User } from "../db/database";
 const authMiddleware = require("../middlewares/middleware");
 
 const router = express.Router();
+
+router.get("/bulk", async (req, res) => {
+  const filter = req.query.filter || "";
+
+  const user = await User.find({
+    $or: [
+      {
+        firstname: {
+          regex: filter,
+        },
+      },
+      {
+        lastname: {
+          regex: filter,
+        },
+      },
+    ],
+  });
+  res.status(200).json({
+    username: user.username,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    password: user.password,
+  });
+});
+
+router.put("/", authMiddleware, async (req, res) => {
+  const validateInput = updateUserSchema.safeParse(req.body);
+  if (!validateInput.success) {
+    return res.status(400).json({
+      msg: "error while updating information",
+    });
+  }
+
+  await User.updateOne(
+    {
+      _id: req.userId,
+    },
+    req.body
+  );
+  res.json({
+    message: "Update successfully",
+  });
+});
 
 router.post("/signup", async (req, res) => {
   const { firstname, lastname, username, password } = req.body;
@@ -37,6 +81,11 @@ router.post("/signup", async (req, res) => {
   });
 
   const userId = user._id;
+
+  await Account.create({
+    userId,
+    balance: 1 + Math.random()*10000
+  })
 
   const token = jwt.sign(
     {
@@ -81,25 +130,6 @@ router.post("/signin", async (req, res) => {
   return res.status(200).json({
     token,
   });
-});
-
-router.put("/", authMiddleware, async (req, res) => {
-  const validateInput = updateUserSchema.safeParse(req.body);
-  if (!validateInput.success) {
-    return res.status(400).json({
-      msg: "error while updating information",
-    });
-  }
-
-  await User.updateOne(
-    {
-      _id: req.userId,
-    },
-    req.body
-  );
-  res.json({
-    message:"Update successfully"
-  })
 });
 
 module.exports = router;
