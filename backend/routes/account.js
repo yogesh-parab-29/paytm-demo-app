@@ -20,9 +20,43 @@ router.post("/transfer", authMiddleware, async (req, res) => {
 
   session.startTransaction();
 
-  const fetchAccount = await Account.findOne({
-    userId : req.userId
-  })
+  const { amount, to } = req.body;
+
+  const fetchUserAccount = await Account.findOne({
+    userId: req.userId,
+  }).session(session);
+
+  if (!fetchUserAccount || fetchUserAccount.balance < amount) {
+    await session.abortTransaction();
+    return res.status(400).json({
+      message: "Insufficient Balance",
+    });
+  }
+
+  const fetchTransferAccount = await Account.findOne({
+    userId: to,
+  }).session(session);
+  if (!fetchTransferAccount) {
+    await session.abortTransaction();
+    return res.json({
+      message: "Account doesnt exist",
+    });
+  }
+
+  await Account.updateOne(
+    { userId: req.userId },
+    { $inc: { balance: -amount } }
+  ).session(session);
+  await Account.updateOne(
+    { userId: to },
+    { $inc: { balance: amount } }
+  ).session(session);
+
+  await session.commitTransaction();
+
+  res.json({
+    message: "Transfer successful",
+  });
 });
 
 module.exports = router;
