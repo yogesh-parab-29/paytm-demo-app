@@ -21,7 +21,6 @@ function App() {
           <Route path="/send" element={<SendMoney />} />
         </Routes>
       </BrowserRouter>
-      Hello World
     </>
   );
 }
