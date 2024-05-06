@@ -10,9 +10,9 @@ const userSchema = new mongoose.Schema({
   password: String,
 });
 
-const accountSchema = new User.Schema({
+const accountSchema = new mongoose.Schema({
   userId: {
-    types: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
@@ -23,7 +23,7 @@ const accountSchema = new User.Schema({
 });
 
 const User = mongoose.model("User", userSchema);
-const Account = mongoose.model("User", userSchema);
+const Account = mongoose.model("Account", accountSchema);
 
 module.exports = {
   User,

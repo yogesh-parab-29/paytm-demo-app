@@ -1,6 +1,6 @@
 const express = require("express");
 const { User, Account } = require("../db/database");
-const router = express.router();
+const router = express.Router();
 
 const authMiddleware = require("../middlewares/middleware");
 const { default: mongoose } = require("mongoose");

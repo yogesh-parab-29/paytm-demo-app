@@ -4,12 +4,31 @@ const {
   signInUserSchema,
   updateUserSchema,
 } = require("../types");
-import { JWT_SECRET } from "../config";
+const { JWT_SECRET } = require("../config");
 const jwt = require("jsonwebtoken");
-import { Account, User } from "../db/database";
+const { Account, User } = require("../db/database");
 const authMiddleware = require("../middlewares/middleware");
 
 const router = express.Router();
+
+router.put("/", authMiddleware, async (req, res) => {
+  const validateInput = updateUserSchema.safeParse(req.body);
+  if (!validateInput.success) {
+    return res.status(400).json({
+      msg: "error while updating information",
+    });
+  }
+
+  await User.updateOne(
+    {
+      _id: req.userId,
+    },
+    req.body
+  );
+  res.json({
+    message: "Update successfully",
+  });
+});
 
 router.get("/bulk", async (req, res) => {
   const filter = req.query.filter || "";
@@ -33,25 +52,6 @@ router.get("/bulk", async (req, res) => {
     firstname: user.firstname,
     lastname: user.lastname,
     password: user.password,
-  });
-});
-
-router.put("/", authMiddleware, async (req, res) => {
-  const validateInput = updateUserSchema.safeParse(req.body);
-  if (!validateInput.success) {
-    return res.status(400).json({
-      msg: "error while updating information",
-    });
-  }
-
-  await User.updateOne(
-    {
-      _id: req.userId,
-    },
-    req.body
-  );
-  res.json({
-    message: "Update successfully",
   });
 });
 
@@ -84,8 +84,8 @@ router.post("/signup", async (req, res) => {
 
   await Account.create({
     userId,
-    balance: 1 + Math.random()*10000
-  })
+    balance: 1 + Math.random() * 10000,
+  });
 
   const token = jwt.sign(
     {
@@ -102,7 +102,7 @@ router.post("/signup", async (req, res) => {
 
 router.post("/signin", async (req, res) => {
   const { username, password } = req.body;
-  const { success } = signInUserSchema.safe(req.body);
+  const { success } = signInUserSchema.safeParse(req.body);
   if (!{ success }) {
     return res.status(411).json({
       message: "Error while logging in",
